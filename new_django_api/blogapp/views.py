@@ -1,9 +1,11 @@
 from django.shortcuts import render
 from .models import Blog
+from django.contrib.auth import get_user_model
 from .serializers import (
     UserRegistrationSerializer,
     BlogSerializer,
     UpdateUserProfileSerializer,
+    UserInfoSerializer,
 )
 from rest_framework.response import Response
 from rest_framework import status
@@ -27,6 +29,13 @@ def blog_list(request):
     serializer = Blog
     serializer = BlogSerializer(paginated_blog, many=True)
     return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(["GET"])
+def get_blog(request, slug):
+    blog = Blog.objects.get(slug=slug)
+    serializer = BlogSerializer(blog)
+    return Response(serializer.data)
 
 
 @api_view(["POST"])
@@ -91,3 +100,19 @@ def delete_blog(request, pk):
     return Response(
         {"message": "Blog deleted successfully"}, status=status.HTTP_204_NO_CONTENT
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_username(request):
+    user = request.user
+    username = user.username
+    return Response({"username": username})
+
+
+@api_view(["GET"])
+def get_userinfo(request, username):
+    User = get_user_model()
+    user = User.objects.get(username=username)
+    serializer = UserInfoSerializer(user)
+    return Response(serializer.data)
